@@ -1,8 +1,9 @@
 package com.devsuperior.dslearnbds.entities;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -15,51 +16,43 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
-
-/**
- * InheritanceType.JOINED - cria uma tabela para cada entidade, no caso tb_lesson, tb_content e tb_task e o 
- * relacionamento entre essas tabelas eh com base em chave estrangeira
- * InheritanceType.SINGLE_TABLE - cria uma unica tabela com todos os atributos, sendo que quando salvamos os dados 
- * de uma entidade os campos da outra ficam nulos na tabela
- * InheritanceType.TABLE_PER_CLASS - cria tabelas somente para entidades concretas, sendo que os atributos da classe 
- * abstrata sao repetidos nessas tabelas
- * 
- * @author johns
- *
- */
 
 @Entity
 @Table(name = "tb_lesson")
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Lesson  implements Serializable {
-	private static final long serialVersionUID = 2168838763170423002L;
+public abstract class Lesson implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String title;
 	private Integer position;
-
+	
 	@ManyToOne
 	@JoinColumn(name = "section_id")
 	private Section section;
-
+	
+	@OneToMany(mappedBy = "lesson")
+	private List<Deliver> deliveries = new ArrayList<>();
+	
 	@ManyToMany
-	@JoinTable(
-		name = "tb_lessons_done", 
-		joinColumns = @JoinColumn(name = "lesson_id"), 
+	@JoinTable(name = "tb_lessons_done",
+		joinColumns = @JoinColumn(name = "lesson_id"),
 		inverseJoinColumns = {
-			 @JoinColumn(name = "user_id"),
-			 @JoinColumn(name = "offer_id")
+				@JoinColumn(name = "user_id"),
+				@JoinColumn(name = "offer_id")
 		}
 	)
-	private Set<Enrollment> enrollmentsDone = new HashSet<Enrollment>();
-
+	private Set<Enrollment> enrollmentsDone = new HashSet<>();
+	
 	public Lesson() {
 	}
 
 	public Lesson(Long id, String title, Integer position, Section section) {
+		super();
 		this.id = id;
 		this.title = title;
 		this.position = position;
@@ -102,9 +95,16 @@ public abstract class Lesson  implements Serializable {
 		return enrollmentsDone;
 	}
 
+	public List<Deliver> getDeliveries() {
+		return deliveries;
+	}
+
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
 	}
 
 	@Override
@@ -116,7 +116,11 @@ public abstract class Lesson  implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		Lesson other = (Lesson) obj;
-		return Objects.equals(id, other.id);
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
 	}
-
 }
