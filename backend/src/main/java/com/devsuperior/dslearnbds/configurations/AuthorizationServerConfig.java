@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -46,6 +47,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired
 	private JwtTokenEnhancer tokenEnhancer; // para adicionar informacoes ao token
 	
+	@Autowired
+	private UserDetailsService userDetailsService;
+	
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 		security.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
@@ -59,8 +63,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 			.withClient(clientId) // login
 			.secret(passwordEncoder.encode(clientSecret)) // senha
 			.scopes("read", "write") // permissao de leitura e escrita
-			.authorizedGrantTypes("password") // tipo da autorizacao, no caso password
-			.accessTokenValiditySeconds(jwtDuration); // duracao do token de 24 horas
+			.authorizedGrantTypes("password", "refresh_token") // tipo da autorizacao, no caso password
+			.accessTokenValiditySeconds(jwtDuration) // duracao do token de 24 horas
+			.refreshTokenValiditySeconds(jwtDuration); // tempo de duara do refresh token
 	}
 
 	// metodo que define que vai autorizar
@@ -74,7 +79,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 		endpoints.authenticationManager(authenticationManager) // processar a autenticacao
 		.tokenStore(tokenStore) // processamento do token
 		.accessTokenConverter(accessTokenConverter)
-		.tokenEnhancer(chain);
+		.tokenEnhancer(chain)
+		.userDetailsService(userDetailsService);
 	}
 
 }
